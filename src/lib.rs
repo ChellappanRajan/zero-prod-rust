@@ -1,4 +1,4 @@
-use actix_web::{web, App, HttpRequest, HttpServer, Responder, HttpResponse};
+use actix_web::{web, App, HttpRequest, HttpServer, Responder, HttpResponse, dev::Server};
 
 //impl Responder trait meaning we are returing any type that returing Responder trait
 //Question:: How come rust knows format implementing Responder trait?
@@ -10,12 +10,13 @@ async fn health_checker(req: HttpRequest) -> impl Responder{
 }
 
 
-pub async fn run() -> std::io::Result<()> {
+pub async fn run() -> Result<Server,std::io::Error> {
     //HttpServer handle all transport level concerns
-    HttpServer::new(|| {
+     let server = HttpServer::new(|| {
         App::new()
         .route("/health_check", web::get().to(health_checker))
     })
     .bind("127.0.0.1:8000")?
-    .run().await
+    .run();
+    Ok(server)
 }
