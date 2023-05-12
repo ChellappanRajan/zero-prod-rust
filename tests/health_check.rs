@@ -14,7 +14,7 @@ async fn health_check(){
     assert_eq!(Some(0), response.content_length());
 }
 
-fn spawn_app()->std::io::Result<()>{
+async fn spawn_app()->std::io::Result<()>{
  zeroProdRust::run()?.await
 }
     
