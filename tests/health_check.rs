@@ -2,7 +2,7 @@
 #[tokio::test]
 async fn health_check(){
     // Arrange
-    spawn_app().await.expect("Failed to spawn our app.");
+    spawn_app();
 
     let client = reqwest::Client::new();
 
@@ -14,7 +14,8 @@ async fn health_check(){
     assert_eq!(Some(0), response.content_length());
 }
 
-async fn spawn_app()->std::io::Result<()>{
- zeroProdRust::run()?.await
+ fn spawn_app(){
+ let server = zeroProdRust::run().expect("Failed to bind address");
+ let _ = tokio::spawn(server);
 }
     
