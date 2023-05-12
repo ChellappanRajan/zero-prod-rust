@@ -15,6 +15,6 @@ async fn health_check(){
 }
 
 async fn spawn_app()->std::io::Result<()>{
- todo!()
+ zeroProdRust::run().await
 }
     
