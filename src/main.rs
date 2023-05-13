@@ -1,10 +1,13 @@
 
+use std::net::TcpListener;
+
 use zeroProdRust::run;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
 //   run()?.await
-    let server = match run("127.0.0.1:8000") {
+    let listener = TcpListener::bind("127.0.0.1").unwrap();
+    let server = match run(listener) {
         Ok(_)=>Ok(()),
         Err(e)=>return Err(e)
     };
