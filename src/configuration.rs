@@ -1,8 +1,9 @@
 use config;
+
 #[derive(serde::Deserialize)]
 pub struct  Settings{
     pub database:DataBaseSettings,
-    pub port:u16
+    pub application_port:u16
 }
 
 #[derive(serde::Deserialize)]
@@ -15,7 +16,7 @@ pub database_name:String
 }
 
 
-pub fn configurations() -> Result<Settings,config::ConfigError>{
+pub fn get_configurations() -> Result<Settings,config::ConfigError>{
     //Init Configuration readers
     let mut settings = config::Config::default();
 
