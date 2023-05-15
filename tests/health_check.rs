@@ -1,5 +1,8 @@
 use std::{net::TcpListener, fmt::format, assert_eq};
 
+use sqlx::{PgConnection, Connection};
+use zeroProdRust::configuration::get_configurations;
+
 
 #[tokio::test]
 async fn health_check(){
@@ -21,6 +24,9 @@ async fn health_check(){
 async fn subscribe_returns_a_200_for_valid_form_data(){
     //Arrang
     let app_address = format!("{}/subscriptions",spawn_app());
+    let configuration = get_configurations().expect("failed to read config");
+    let connection_string = configuration.database.connection_string();
+    let connection = PgConnection::connect(&connection_string).await.expect("failed to connect db");
     let client = reqwest::Client::new();
 
     //Act
