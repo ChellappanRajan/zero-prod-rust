@@ -25,6 +25,7 @@ features = [
     "chrono", 
     "migrate"
 ]
+config = "0.11"
 
 
 [dev-dependencies]
