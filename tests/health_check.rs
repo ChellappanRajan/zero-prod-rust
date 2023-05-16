@@ -6,9 +6,12 @@ use zeroProdRust::configuration::get_configurations;
 
 #[tokio::test]
 async fn health_check(){
+   
     // Arrange
     let address = format!("{}/health_check",spawn_app());
-
+    let configuration = get_configurations().expect("failed to read config");
+    let connection_string = configuration.database.connection_string();
+    let connection = PgConnection::connect(&connection_string).await.expect("failed to connect db");
     let client = reqwest::Client::new();
 
     
@@ -18,6 +21,11 @@ async fn health_check(){
     //Assert
     assert!(response.status().is_success());
     assert_eq!(Some(0), response.content_length());
+
+    let saved = sqlx::query!("SELECT email,name FROM  subscriptions",).fetch_one(&mut connection).await.expect("Failed to fetch record");
+
+    assert_eq!(saved.email, "ursula_le_guin@gmail.com");
+    assert_eq!(saved.name, "le guin");
 }
 
 #[tokio::test]
