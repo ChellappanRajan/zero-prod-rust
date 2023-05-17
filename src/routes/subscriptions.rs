@@ -1,29 +1,35 @@
+use std::print;
+
 use actix_web::{HttpRequest, Responder, HttpResponse, web};
-use sqlx::PgConnection;
+use sqlx::{PgPool};
 use chrono::Utc;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
-struct FormData{
+pub struct FormData{
    name:String,
    email:String
 }
 
 pub async fn subscribe(
-  _form:web::Form<FormData>,
+  form:web::Form<FormData>,
   //Retrieving connection from app state
-  _connection:web::Data<PgConnection>
+  pool:web::Data<PgPool>
 )->HttpResponse{
-  sqlx::query!(
+  match sqlx::query!(
     r#"
     INSERT INTO subscriptions (id,email,name,subscribed_at)
     VALUES ($1,$2,$3,$4)
     "#,
     Uuid::new_v4(),
-    _form.email,
-    _form.name,
+    form.email,
+    form.name,
     Utc::now()
-  ).execute(_connection.get_ref()).await;
-  
-  HttpResponse::Ok().finish()
+  ).execute(pool.get_ref()).await{
+    Ok(_)=> HttpResponse::Ok().finish(),
+    Err(e)=>{
+      println!("Failed to excute query,{}",e);
+      HttpResponse::InternalServerError().finish()
+    }
+  }
 }
