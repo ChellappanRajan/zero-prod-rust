@@ -23,7 +23,7 @@ pub async fn subscribe(
     _form.email,
     _form.name,
     Utc::now()
-  ).excute(_connection.get_ref()).await;
+  ).execute(_connection.get_ref()).await;
   
   HttpResponse::Ok().finish()
 }

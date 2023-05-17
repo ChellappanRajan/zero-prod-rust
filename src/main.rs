@@ -16,7 +16,7 @@ async fn main() -> std::io::Result<()> {
     let connection = PgConnection::connect(&configuration.database.connection_string()).await.expect("Failed to connect postgress");
 
     let address = format!("127.0.0.1:{}",configuration.application_port);
-    
+
 //   run()?.await
     let listener = TcpListener::bind(address).unwrap();
     let server = match run(listener,connection) {
