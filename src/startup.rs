@@ -1,20 +1,19 @@
+use crate::routes::{health_checker, subscribe};
+use actix_web::dev::Server;
+use actix_web::web::Data;
+use actix_web::{web, App, HttpServer};
+use sqlx::PgPool;
 use std::net::TcpListener;
-use actix_web::{web, App,HttpServer, dev::Server};
-use sqlx::{PgConnection, PgPool};
 
-
-
-pub fn run(listener: TcpListener,db_pool:PgPool) -> Result<Server,std::io::Error> {
-
-    //HttpServer handle all transport level concerns
-     let server = HttpServer::new(move|| {
+pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Error> {
+    let db_pool = Data::new(db_pool);
+    let server = HttpServer::new(move || {
         App::new()
-        .route("/health_check", web::get().to(crate::routes::health_checker))
-        .route("/subscriptions", web::post().to(crate::routes::subscribe))
-        .app_data(db_pool.clone())
+            .route("/health_check", web::get().to(health_checker))
+            .route("/subscriptions", web::post().to(subscribe))
+            .app_data(db_pool.clone())
     })
     .listen(listener)?
     .run();
     Ok(server)
 }
-

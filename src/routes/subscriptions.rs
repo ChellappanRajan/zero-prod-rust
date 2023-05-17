@@ -7,8 +7,8 @@ use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
 pub struct FormData{
-   name:String,
-   email:String
+  email:String,
+  name:String
 }
 
 pub async fn subscribe(

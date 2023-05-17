@@ -1,41 +1,43 @@
-use std::{net::TcpListener, fmt::format, assert_eq};
+use std::{net::TcpListener, assert_eq};
 
-use sqlx::{PgConnection, Connection};
+use sqlx::{PgPool};
 use zeroProdRust::configuration::get_configurations;
+
+
+pub struct TestApp{
+    pub address:String,
+    pub db_pool: PgPool
+} 
 
 
 #[tokio::test]
 async fn health_check(){
-   
+
     // Arrange
-    let address = format!("{}/health_check",spawn_app());
-    let configuration = get_configurations().expect("failed to read config");
-    let connection_string = configuration.database.connection_string();
-    let connection = PgConnection::connect(&connection_string).await.expect("failed to connect db");
+    let app = spawn_app().await;
     let client = reqwest::Client::new();
 
-    
-    //Act
-    let response = client.get(address).send().await.expect("Failed to excute test");
+    // Act
+    let response = client
+        // Use the returned application address
+        .get(&format!("{}/health_check", &app.address))
+        .send()
+        .await
+        .expect("Failed to execute request.");
 
-    //Assert
+    // Assert
     assert!(response.status().is_success());
-    assert_eq!(Some(0), response.content_length());
 
-    let saved = sqlx::query!("SELECT email,name FROM  subscriptions",).fetch_one(&mut connection).await.expect("Failed to fetch record");
-
-    assert_eq!(saved.email, "ursula_le_guin@gmail.com");
-    assert_eq!(saved.name, "le guin");
 }
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data(){
-    //Arrang
-    let app_address = format!("{}/subscriptions",spawn_app());
-    let configuration = get_configurations().expect("failed to read config");
-    let connection_string = configuration.database.connection_string();
-    let connection = PgConnection::connect(&connection_string).await.expect("failed to connect db");
+    //Arrange
+    let app = spawn_app().await;
+    // let configuration = get_configurations().expect("failed to read config");
+    // let connection_string = configuration.database.connection_string();
     let client = reqwest::Client::new();
+    let app_address = format!("{}/subscriptions",&app.address);
 
     //Act
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
@@ -49,14 +51,18 @@ async fn subscribe_returns_a_200_for_valid_form_data(){
    //Assert
    assert_eq!(200,response.status().as_u16());
 
+   let saved = sqlx::query!("SELECT email, name FROM subscriptions",).fetch_one(&app.db_pool).await.expect("Failed to fetch");
+   assert_eq!(saved.email, "ursula_le_guin@gmail.com");
+   assert_eq!(saved.name, "le guin");
 }
 
 
 #[tokio::test]
 async fn subscribe_returns_a_400_when_data_is_missing(){
     //Arrang
-    let app_address = format!("{}/subscriptions",spawn_app());
+    let app: TestApp = spawn_app().await;
     let client = reqwest::Client::new(); 
+    let app_address = format!("{}/subscriptions",&app.address);
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
         ("email=ursula_le_guin%40gmail.com", "missing the name"),
@@ -73,18 +79,24 @@ async fn subscribe_returns_a_400_when_data_is_missing(){
     .expect("Failded to excute request.");
 
     //Assert
-    assert_eq!(200,response.status().as_u16());
+    assert_eq!(400,response.status().as_u16(),
+    "The API did not fail with 400 Bad Request when the payload was {}",
+    error_msg);
     }
 
 }
 
 
- fn spawn_app()->String{
+ async fn spawn_app()->TestApp{
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failde to bind random port");
     let port = listener.local_addr().unwrap().port();
-    let server = zeroProdRust::startup::run(listener).expect("Failed to bind address");
+    let configuration = get_configurations().expect("Failed to read configuration.");
+    let connection_pool = PgPool::connect(&configuration.database.connection_string())
+        .await.expect("Failed to connect postgres");
+
+    let server = zeroProdRust::startup::run(listener,connection_pool.clone()).expect("Failed to bind address");
     let _ = tokio::spawn(server);
-    format!("http://127.0.0.1:{}",port)
+    TestApp { address: format!("http://127.0.0.1:{}",port), db_pool:connection_pool  }
 }
     
 
