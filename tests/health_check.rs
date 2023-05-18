@@ -1,6 +1,7 @@
 use std::{net::TcpListener, assert_eq};
 
 use sqlx::{PgPool};
+use uuid::Uuid;
 use zeroProdRust::configuration::get_configurations;
 
 
@@ -90,7 +91,8 @@ async fn subscribe_returns_a_400_when_data_is_missing(){
  async fn spawn_app()->TestApp{
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failde to bind random port");
     let port = listener.local_addr().unwrap().port();
-    let configuration = get_configurations().expect("Failed to read configuration.");
+    let mut configuration = get_configurations().expect("Failed to read configuration.");
+    configuration.database.database_name =  Uuid::new_v4().to_string();
     let connection_pool = PgPool::connect(&configuration.database.connection_string())
         .await.expect("Failed to connect postgres");
 
