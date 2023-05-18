@@ -1,8 +1,9 @@
 use std::{net::TcpListener, assert_eq};
+// use zeroProdRust::configuration::DataBaseSettings;
 
-use sqlx::{PgPool};
+use sqlx::{PgPool, PgConnection, Connection, Executor};
 use uuid::Uuid;
-use zeroProdRust::configuration::get_configurations;
+use zeroProdRust::configuration::{get_configurations,DataBaseSettings};
 
 
 pub struct TestApp{
@@ -93,8 +94,7 @@ async fn subscribe_returns_a_400_when_data_is_missing(){
     let port = listener.local_addr().unwrap().port();
     let mut configuration = get_configurations().expect("Failed to read configuration.");
     configuration.database.database_name =  Uuid::new_v4().to_string();
-    let connection_pool = PgPool::connect(&configuration.database.connection_string())
-        .await.expect("Failed to connect postgres");
+    let connection_pool = configure_database(&configuration.database).await;
 
     let server = zeroProdRust::startup::run(listener,connection_pool.clone()).expect("Failed to bind address");
     let _ = tokio::spawn(server);
@@ -102,3 +102,26 @@ async fn subscribe_returns_a_400_when_data_is_missing(){
 }
     
 
+pub async fn configure_database(config: &DataBaseSettings) -> PgPool {
+    // Create database
+    let mut connection = PgConnection::connect(&config.connection_string_without_db())
+        .await
+        .expect("Failed to connect to Postgres");
+    
+         connection
+        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+        .await
+        .expect("Failed to create database.");
+
+    // Migrate database
+    let connection_pool = PgPool::connect(&config.connection_string())
+        .await
+        .expect("Failed to connect to Postgres.");
+
+        sqlx::migrate!("./scripts/migrations")
+        .run(&connection_pool)
+        .await
+        .expect("Failed to migrate the database");
+
+    connection_pool
+}

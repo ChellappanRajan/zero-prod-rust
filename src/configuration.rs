@@ -42,3 +42,4 @@ pub fn get_configurations() -> Result<Settings,config::ConfigError>{
 
     settings.try_into()
 }
+
