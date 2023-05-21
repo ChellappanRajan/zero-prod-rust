@@ -10,6 +10,7 @@ use zeroProdRust::configuration::{get_configurations};
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
 
+    //Override rust global default log  
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let configuration = get_configurations().expect("Failed to Read config");
