@@ -17,8 +17,16 @@ pub async fn subscribe(
   pool:web::Data<PgPool>
 )->HttpResponse{
   let request_id =  Uuid::new_v4();
-  tracing::info!("request_id {}- Adding '{}' '{}' as a new subscriber.",request_id,form.email,form.name);
-  tracing::info!("Saving new subscriber details in the database");
+  let request_span = tracing::info_span!(
+    "Adding new Subscriber",
+    %request_id,
+    subscriber_email = %form.email,
+    subscriber_name = %form.name
+  );
+
+  let request_guard = request_span.enter();
+  // tracing::info!("request_id {}- Adding '{}' '{}' as a new subscriber.",request_id,form.email,form.name);
+  // tracing::info!("Saving new subscriber details in the database");
   match sqlx::query!(
     r#"
     INSERT INTO subscriptions (id,email,name,subscribed_at)
