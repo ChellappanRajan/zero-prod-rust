@@ -1,17 +1,35 @@
 
 use std::net::TcpListener;
 use sqlx::{PgPool};
+use tracing_log::LogTracer;
 use zeroProdRust::startup::run;
 use env_logger::Env;
 use zeroProdRust::configuration::{get_configurations};
+use tracing::subscriber::set_global_default;
+use tracing_bunyan_formatter::{BunyanFormattingLayer,JsonStorageLayer};
+use tracing_subscriber::{Layer::SubscriberExt,  EnvFilter,Registry, prelude::__tracing_subscriber_SubscriberExt};
 
 
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
 
+
+    LogTracer::init().expect("Failed to set logger");
+
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(
+        |_| EnvFilter::new("info")
+    );
+
+    let formatting_layer = BunyanFormattingLayer::new("zeroToProd".into(),std::io::stdout);
+
+
+    let subscriber = Registry::default().with(env_filter).with(JsonStorageLayer).with(formatting_layer);
+
+    set_global_default(subscriber).expect("Failed to set subscriber");
+
     //Override rust global default log  
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    // env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let configuration = get_configurations().expect("Failed to Read config");
 
