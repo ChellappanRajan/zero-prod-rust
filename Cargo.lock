@@ -2578,6 +2578,7 @@ dependencies = [
  "chrono",
  "config",
  "log",
+ "once_cell",
  "reqwest",
  "serde 1.0.163",
  "sqlx",

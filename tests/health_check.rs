@@ -3,13 +3,21 @@ use std::{net::TcpListener, assert_eq};
 
 use sqlx::{PgPool, PgConnection, Connection, Executor};
 use uuid::Uuid;
-use zeroProdRust::configuration::{get_configurations,DataBaseSettings};
+use zeroProdRust::{configuration::{get_configurations,DataBaseSettings}, telemetry::{get_subscriber, init_subscriber}};
+// Ensure that the `tracing` stack is only initialised once using `once_cell`”
+use once_cell::sync::Lazy;
+
 
 
 pub struct TestApp{
     pub address:String,
     pub db_pool: PgPool
 } 
+
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let subscriber = get_subscriber("test".into(),"debug".into());
+    init_subscriber(subscriber);
+});
 
 
 #[tokio::test]
@@ -103,6 +111,10 @@ async fn subscribe_returns_a_400_when_data_is_missing(){
     
 
 pub async fn configure_database(config: &DataBaseSettings) -> PgPool {
+
+    //Only once it will excute and all the other time it will be skipped.
+    Lazy::force(&TRACING);
+
     // Create database
     let mut connection = PgConnection::connect(&config.connection_string_without_db())
         .await
