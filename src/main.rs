@@ -3,7 +3,6 @@ use std::net::TcpListener;
 use sqlx::{PgPool};
 use tracing_log::LogTracer;
 use zeroProdRust::startup::run;
-use env_logger::Env;
 use zeroProdRust::configuration::{get_configurations};
 use tracing::subscriber::set_global_default;
 use tracing_bunyan_formatter::{BunyanFormattingLayer,JsonStorageLayer};
