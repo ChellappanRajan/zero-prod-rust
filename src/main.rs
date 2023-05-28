@@ -6,12 +6,13 @@ use zeroProdRust::configuration::{get_configurations};
 use zeroProdRust::telemetry::{get_subscriber, init_subscriber};
 
 
-
-
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
 
-    let subscriber = get_subscriber("info".into(), "zeroToProd".into());
+    let str = String::from("test1");
+    let str2 = String::from("test2");
+
+    let subscriber = get_subscriber("info".into(), "zeroToProd".into(),std::io::stdout);
     init_subscriber(subscriber);
 
     let configuration = get_configurations().expect("Failed to Read config");
