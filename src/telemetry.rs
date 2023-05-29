@@ -1,7 +1,5 @@
 use tracing_subscriber::fmt::MakeWriter;
-
 use std::io::Sink;
-
 use tracing::Subscriber;
 use tracing_log::LogTracer;
 
